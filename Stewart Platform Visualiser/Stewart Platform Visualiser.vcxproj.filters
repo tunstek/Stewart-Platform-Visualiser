@@ -29,7 +29,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LICENSE.cpp">
+    <ClCompile Include="LICENSE">
       <Filter>Resource Files</Filter>
     </ClCompile>
   </ItemGroup>
