@@ -6,8 +6,8 @@
 #define PI 3.14159
 
 // TEST
-float roll = 0.0, pitch = 0.0, yaw = 0.0; // degrees
-float surge = 0.0, sway = 0.0, heave = 50.0; // mm
+float roll = 10.0, pitch = 0.0, yaw = 0.0; // degrees
+float surge = 50.0, sway = 0.0, heave = 0.0; // mm
 
 // Globals
 float cameraX = -1.0, cameraY = 0.5, cameraZ = 1500;
@@ -258,7 +258,7 @@ void draw_platform(GLfloat x_1, GLfloat y_1, GLfloat z_1,
 
     GLfloat camera_matrix[16]; 
     GLfloat matrix[16]; // translation and rotation for both object and camera
-    GLfloat translation_matrix[16]; // this is the resultant translation and rotation matrix for this object
+    GLfloat translation_rotation_matrix[16]; // this is the resultant translation and rotation matrix for this object
 
     // get camera matrix
     glGetFloatv(GL_MODELVIEW_MATRIX, camera_matrix);
@@ -271,26 +271,35 @@ void draw_platform(GLfloat x_1, GLfloat y_1, GLfloat z_1,
     // get new matrix after transformations
     glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
 
-    // Get the transformation component via camera_matrix * inverse(matrix)
-    get_object_translation_rotation_matrix(camera_matrix, matrix, translation_matrix);
-    // translation_matrix is now the translation for everything else
-    gluInvertMatrix(translation_matrix, translation_matrix); // invert to get the translation for the platform
-    printf("Res matrix: \n");
-    print_matrix_16(translation_matrix);
 
-    //printf("Old v_1 co-ordinates: %f %f %f\n", v_1[0], v_1[1], v_1[2]);
+    // Get the transformation component via camera_matrix * inverse(matrix)
+    get_object_translation_rotation_matrix(camera_matrix, matrix, translation_rotation_matrix);
+    // translation_matrix is now the translation for everything else
+    gluInvertMatrix(translation_rotation_matrix, translation_rotation_matrix); // invert to get the translation for the platform
+    // opengl puts the translations on the last row, 'fix' by copying them to the last column instead
+    translation_rotation_matrix[3] = -translation_rotation_matrix[12];
+    translation_rotation_matrix[7] = -translation_rotation_matrix[13];
+    translation_rotation_matrix[11] = -translation_rotation_matrix[14];
+
+
+    printf("Translation Rotation matrix: \n");
+    print_matrix_16(translation_rotation_matrix);
 
     
-    matrix_mult_16_4(translation_matrix, v_1, v_1_new);
-    matrix_mult_16_4(translation_matrix, v_2, v_2_new);
-    matrix_mult_16_4(translation_matrix, v_3, v_3_new);
-    matrix_mult_16_4(translation_matrix, v_4, v_4_new);
-    matrix_mult_16_4(translation_matrix, v_5, v_5_new);
-    matrix_mult_16_4(translation_matrix, v_6, v_6_new);
 
+    
+    printf("Old v_1 co-ordinates: ");
+    print_matrix_4(v_1);
 
-    //printf("New v_1 co-ordinates: ");
-    //print_matrix_4(v_1_new);
+    matrix_mult_16_4(translation_rotation_matrix, v_1, v_1_new);
+    matrix_mult_16_4(translation_rotation_matrix, v_2, v_2_new);
+    matrix_mult_16_4(translation_rotation_matrix, v_3, v_3_new);
+    matrix_mult_16_4(translation_rotation_matrix, v_4, v_4_new);
+    matrix_mult_16_4(translation_rotation_matrix, v_5, v_5_new);
+    matrix_mult_16_4(translation_rotation_matrix, v_6, v_6_new);
+
+    printf("New v_1 co-ordinates: ");
+    print_matrix_4(v_1_new);
     
 
 
@@ -407,42 +416,42 @@ void display() {
     
     //printf("\nLink 1\n");
     
-    link(bottom_link_1[0], bottom_link_1[1], bottom_link_1[2], top_link_1[0], top_link_1[1], top_link_1[2]);
+    link(bottom_link_1[0], bottom_link_1[1], bottom_link_1[2], v_1_new[0], v_1_new[1], v_1_new[2]);
     link_end(bottom_link_1[0], bottom_link_1[1], bottom_link_1[2], 10, 5, 5);
     link_end(v_1_new[0], v_1_new[1], v_1_new[2], 10, 5, 5);
     //extendable_link(50.0, 50.0, bottom_link_1[0], bottom_link_1[1], top_link_1[0], top_link_1[1], top_link_1[2]);
 
     //printf("\nLink 2\n");
     
-    link(bottom_link_2[0], bottom_link_2[1], bottom_link_2[2], top_link_2[0], top_link_2[1], top_link_2[2]);
+    link(bottom_link_2[0], bottom_link_2[1], bottom_link_2[2], v_2_new[0], v_2_new[1], v_2_new[2]);
     link_end(bottom_link_2[0], bottom_link_2[1], bottom_link_2[2], 10, 5, 5);
     link_end(v_2_new[0], v_2_new[1], v_2_new[2], 10, 5, 5);
     //extendable_link(50.0, 50.0, bottom_link_2[0], bottom_link_2[1], top_link_2[0], top_link_2[1], top_link_2[2]);
 
     //printf("\nLink 3\n");
     
-    link(bottom_link_3[0], bottom_link_3[1], bottom_link_3[2], top_link_3[0], top_link_3[1], top_link_3[2]);
+    link(bottom_link_3[0], bottom_link_3[1], bottom_link_3[2], v_3_new[0], v_3_new[1], v_3_new[2]);
     link_end(bottom_link_3[0], bottom_link_3[1], bottom_link_3[2], 10, 5, 5);
     link_end(v_3_new[0], v_3_new[1], v_3_new[2], 10, 5, 5);
     //extendable_link(50.0, 50.0, bottom_link_3[0], bottom_link_3[1], top_link_3[0], top_link_3[1], top_link_3[2]);
 
     //printf("\nLink 4\n");
     
-    link(bottom_link_4[0], bottom_link_4[1], bottom_link_4[2], top_link_4[0], top_link_4[1], top_link_4[2]);
+    link(bottom_link_4[0], bottom_link_4[1], bottom_link_4[2], v_4_new[0], v_4_new[1], v_4_new[2]);
     link_end(bottom_link_4[0], bottom_link_4[1], bottom_link_4[2], 10, 5, 5);
     link_end(v_4_new[0], v_4_new[1], v_4_new[2], 10, 5, 5);
     //extendable_link(50.0, 50.0, bottom_link_4[0], bottom_link_4[1], top_link_4[0], top_link_4[1], top_link_4[2]);
 
     //printf("\nLink 5\n");
     
-    link(bottom_link_5[0], bottom_link_5[1], bottom_link_5[2], top_link_5[0], top_link_5[1], top_link_5[2]);
+    link(bottom_link_5[0], bottom_link_5[1], bottom_link_5[2], v_5_new[0], v_5_new[1], v_5_new[2]);
     link_end(bottom_link_5[0], bottom_link_5[1], bottom_link_5[2], 10, 5, 5);
     link_end(v_5_new[0], v_5_new[1], v_5_new[2], 10, 5, 5);
     //extendable_link(50.0, 50.0, bottom_link_5[0], bottom_link_5[1], top_link_5[0], top_link_5[1], top_link_5[2]);
 
     //printf("\nLink 6\n");
     
-    link(bottom_link_6[0], bottom_link_6[1], bottom_link_6[2], top_link_6[0], top_link_6[1], top_link_6[2]);
+    link(bottom_link_6[0], bottom_link_6[1], bottom_link_6[2], v_6_new[0], v_6_new[1], v_6_new[2]);
     link_end(bottom_link_6[0], bottom_link_6[1], bottom_link_6[2], 10, 5, 5);
     link_end(v_6_new[0], v_6_new[1], v_6_new[2], 10, 5, 5);
     //extendable_link(50.0, 50.0, bottom_link_6[0], bottom_link_6[1], top_link_6[0], top_link_6[1], top_link_6[2]);
