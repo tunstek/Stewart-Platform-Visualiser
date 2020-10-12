@@ -21,12 +21,10 @@
   <ItemGroup>
     <ClInclude Include="main.h" />
     <ClInclude Include="memMapping.h" />
-    <ClInclude Include="shader.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="shader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Readme.md" />
