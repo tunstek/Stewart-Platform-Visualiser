@@ -35,9 +35,6 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LICENSE">
-      <Filter>Resource Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentShader.fragmentshader">
@@ -46,7 +43,7 @@
     <None Include="vertexShader.vertexshader">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="Readme.md">
+    <None Include="..\Readme.md">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

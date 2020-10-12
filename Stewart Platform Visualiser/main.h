@@ -5,42 +5,78 @@
 #include "utils.h"
 #include "memMapping.h"
 
-#define PI 3.14159
+
+// CONFIG
+#define BOTTOM_LINK_1 { -530.0, 233.0, 0 }
+#define TOP_LINK_1 { -530.0, -233.0, 500 }
+
+#define BOTTOM_LINK_2 { -466.0, 341, 0 }
+#define TOP_LINK_2 { -62.0, 575.0, 500 }
+
+#define BOTTOM_LINK_3 { 466.0f, 341.0f, 0.0f }
+#define TOP_LINK_3 { 62.0f, 575.0f, 500.0f }
+
+#define BOTTOM_LINK_4 { 529.0f, 233.0f, 0.0f }
+#define TOP_LINK_4 { 529.0f, -233.0f, 500.0f }
+
+#define BOTTOM_LINK_5 { 62.0f, -575.0f, 0.0f }
+#define TOP_LINK_5 { 466.0f, -341.0f, 500.0f }
+
+#define BOTTOM_LINK_6 { -62.0f, -575.0f, 0.0f }
+#define TOP_LINK_6 { -466.0f, -341.0f, 500.0f }
+
+#define MEM_MAP_FILEPATH "Local\\motion_ctrl_mid_vals"
+
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 
-// TEST
-//float roll = 10.0, pitch = 0.0, yaw = 0.0; // degrees
-//float surge = 50.0, sway = 0.0, heave = 0.0; // mm
+#define PLATFORM_COLOR 255, 255, 255
+#define LINK_COLOR 255, 0, 255
+#define GUI_BOX_COLOR 0, 255, 1
+
+
+#define PI 3.14159
+
 
 // Globals
-//float cameraX = 10.0, cameraY = 10.5, cameraZ = 10;
 float cameraX = -1.0, cameraY = 0.5, cameraZ = 1500;
 float cameraRoll = 0.0, cameraPitch = -43.0;
 int lastMouseX = 0, lastMouseY = 0;
 int current_button;
 
-// memory mapping
-struct SPageFileInputs {
-    float* roll; // in radians
-    float* pitch; // in radians
-    float* yaw; // in radians
-    float* surge; // x; // mm
-    float* sway; // y; // mm
-    float* heave; // z; // mm
-};
-memMapping<SPageFileInputs> inputs;
-SPageFileInputs* inputsPtr = inputs.init("Local\\test");
-float roll, pitch, yaw, surge, sway, heave;
+const float bottom_link_1[3] = BOTTOM_LINK_1;
+const float top_link_1[3] = TOP_LINK_1;
+const float bottom_link_2[3] = BOTTOM_LINK_2;
+const float top_link_2[3] = TOP_LINK_2;
+const float bottom_link_3[3] = BOTTOM_LINK_3;
+const float top_link_3[3] = TOP_LINK_3;
+const float bottom_link_4[3] = BOTTOM_LINK_4;
+const float top_link_4[3] = TOP_LINK_4;
+const float bottom_link_5[3] = BOTTOM_LINK_5;
+const float top_link_5[3] = TOP_LINK_5;
+const float bottom_link_6[3] = BOTTOM_LINK_6;
+const float top_link_6[3] = TOP_LINK_6;
 
-
-// Calculated new platform vertices after transformations
+// Calculated new platform (top link) vertices after transformations
 GLfloat v_1_new[4] = { 0.0, 0.0, 0.0, 0.0 };
 GLfloat v_2_new[4] = { 0.0, 0.0, 0.0, 0.0 };
 GLfloat v_3_new[4] = { 0.0, 0.0, 0.0, 0.0 };
 GLfloat v_4_new[4] = { 0.0, 0.0, 0.0, 0.0 };
 GLfloat v_5_new[4] = { 0.0, 0.0, 0.0, 0.0 };
 GLfloat v_6_new[4] = { 0.0, 0.0, 0.0, 0.0 };
+
+// memory mapping
+struct SPageFileInputs {
+    float roll; // in radians
+    float pitch; // in radians
+    float yaw; // in radians
+    float surge; // x; // mm
+    float sway; // y; // mm
+    float heave; // z; // mm
+};
+memMapping<SPageFileInputs> inputs;
+SPageFileInputs* inputsPtr;
+
 
 
 void link_end(GLdouble x, GLdouble y, GLdouble z, GLdouble r, GLint slices, GLint stacks) {
@@ -108,29 +144,11 @@ void draw_platform(GLfloat x_1, GLfloat y_1, GLfloat z_1,
 
     // get camera matrix
     glGetFloatv(GL_MODELVIEW_MATRIX, camera_matrix);
-    
 
-
-    // TEST
-    inputsPtr->roll = &roll;
-    inputsPtr->pitch = &pitch;
-    inputsPtr->yaw = &yaw;
-    inputsPtr->sway = &sway;
-    inputsPtr->surge = &surge;
-    inputsPtr->heave = &heave;
-
-    *inputsPtr->roll = 10.0;
-    *inputsPtr->pitch = 15.0;
-    *inputsPtr->yaw = 5.0;
-    *inputsPtr->sway = 2.0;
-    *inputsPtr->surge = 5.0;
-    *inputsPtr->heave = 4.0;
-
-
-    glTranslatef(*inputsPtr->sway, *inputsPtr->surge, *inputsPtr->heave);
-    glRotatef((GLfloat)*inputsPtr->roll, 0.0, 1.0, 0.0);
-    glRotatef((GLfloat)*inputsPtr->pitch, 1.0, 0.0, 0.0);
-    glRotatef((GLfloat)*inputsPtr->yaw, 0.0, 0.0, 1.0);
+    glTranslatef(inputsPtr->sway, inputsPtr->surge, inputsPtr->heave);
+    glRotatef((GLfloat)inputsPtr->roll * (180/PI), 0.0, 1.0, 0.0);
+    glRotatef((GLfloat)inputsPtr->pitch * (180 / PI), 1.0, 0.0, 0.0);
+    glRotatef((GLfloat)inputsPtr->yaw * (180 / PI), 0.0, 0.0, 1.0);
 
     // get new matrix after transformations
     glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
@@ -194,20 +212,6 @@ void output(GLfloat x, GLfloat y, std::string text, ...) {
 
 void display() {
 
-    float bottom_link_1[3] = { -530.0, 233.0, 0 };
-    float top_link_1[3] = { -530.0, -233.0, 500 };
-    float bottom_link_2[3] = { -466.0, 341, 0 };
-    float top_link_2[3] = { -62.0, 575.0, 500 };
-    float bottom_link_3[3] = { 466.0f, 341.0f, 0.0f };
-    float top_link_3[3] = { 62.0f, 575.0f, 500.0f };
-    float bottom_link_4[3] = { 529.0f, 233.0f, 0.0f };
-    float top_link_4[3] = { 529.0f, -233.0f, 500.0f };
-    float bottom_link_5[3] = { 62.0f, -575.0f, 0.0f };
-    float top_link_5[3] = { 466.0f, -341.0f, 500.0f };
-    float bottom_link_6[3] = { -62.0f, -575.0f, 0.0f };
-    float top_link_6[3] = { -466.0f, -341.0f, 500.0f };
-
-
     glClear(GL_COLOR_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
@@ -220,10 +224,10 @@ void display() {
 
     GLfloat camera_matrix[16];
     glGetFloatv(GL_MODELVIEW_MATRIX, camera_matrix);
-    printf("Camera Matrix: \n");
-    print_matrix_16(camera_matrix);
+    //printf("Camera Matrix: \n");
+    //print_matrix_16(camera_matrix);
 
-    glColor3ub(255, 255, 255);
+    glColor3ub(PLATFORM_COLOR);
    
     draw_platform(top_link_1[0], top_link_1[1], top_link_1[2],
         top_link_2[0], top_link_2[1], top_link_2[2],
@@ -232,7 +236,8 @@ void display() {
         top_link_5[0], top_link_5[1], top_link_5[2],
         top_link_6[0], top_link_6[1], top_link_6[2]);
     
-    
+    glColor3ub(LINK_COLOR);
+
     link(bottom_link_1[0], bottom_link_1[1], bottom_link_1[2], v_1_new[0], v_1_new[1], v_1_new[2]);
     link_end(bottom_link_1[0], bottom_link_1[1], bottom_link_1[2], 10, 5, 5);
     link_end(v_1_new[0], v_1_new[1], v_1_new[2], 10, 5, 5);
@@ -283,7 +288,7 @@ void display() {
     glDisable(GL_CULL_FACE);
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    glColor3f(0.0f, 255.0f, 1.0f);
+    glColor3f(GUI_BOX_COLOR);
     glBegin(GL_QUADS);
     glVertex2f(0.0, 0.0);
     glVertex2f(100.0, 0.0);
@@ -292,12 +297,12 @@ void display() {
     glEnd();
 
     glColor3f(0.0f, 0.0f, 0.0f);
-    output(10, 20,  std::string("Roll:  ") + float_to_str(roll, 2));
-    output(10, 50,  std::string("Pitch: ") + float_to_str(pitch, 2));
-    output(10, 80,  std::string("Yaw:  ") + float_to_str(yaw, 2));
-    output(10, 110, std::string("Surge: ") + float_to_str(surge, 2));
-    output(10, 140, std::string("Sway: ") + float_to_str(sway, 2));
-    output(10, 170, std::string("Heave: ") + float_to_str(heave, 2));
+    output(10, 20,  std::string("Roll:  ") + float_to_str(inputsPtr->roll * (180/PI), 2));
+    output(10, 50,  std::string("Pitch: ") + float_to_str(inputsPtr->pitch * (180 / PI), 2));
+    output(10, 80,  std::string("Yaw:  ") + float_to_str(inputsPtr->yaw * (180 / PI), 2));
+    output(10, 110, std::string("Surge: ") + float_to_str(inputsPtr->surge, 2));
+    output(10, 140, std::string("Sway: ") + float_to_str(inputsPtr->sway, 2));
+    output(10, 170, std::string("Heave: ") + float_to_str(inputsPtr->heave, 2));
 
     // Make sure we can render 3d again
     glMatrixMode(GL_PROJECTION);
@@ -307,6 +312,10 @@ void display() {
 
     glFlush();
     glutSwapBuffers();
+
+
+    // *** TODO: Limit this call
+    glutPostRedisplay(); 
 }
 
 
@@ -381,6 +390,9 @@ void init() {
     glLoadIdentity();
     glutMouseFunc(mouse);
     glutMotionFunc(drag);
+
+    // init the mmf pointers
+    inputsPtr = inputs.init(MEM_MAP_FILEPATH);
 }
 
 
