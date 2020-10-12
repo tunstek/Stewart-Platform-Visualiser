@@ -19,12 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="main.h" />
     <ClInclude Include="memMapping.h" />
     <ClInclude Include="utils.h" />
+    <ClInclude Include="visualiser.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="visualiser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Readme.md" />

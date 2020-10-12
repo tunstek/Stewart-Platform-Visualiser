@@ -1,4 +1,5 @@
 #pragma once
+
 #include <iomanip>
 #include <sstream>
 
@@ -6,7 +7,7 @@
 /////////////////////////////////////////////
 ///////////// STRING OPERATIONS /////////////
 /////////////////////////////////////////////
-std::string float_to_str(float a, int precision) {
+inline std::string float_to_str(float a, int precision) {
     std::stringstream stream;
     stream << std::fixed << std::setprecision(2) << a;
     return stream.str();
@@ -17,19 +18,19 @@ std::string float_to_str(float a, int precision) {
 ///////////// MATRIX OPERATIONS /////////////
 /////////////////////////////////////////////
 
-void print_matrix_16(GLfloat m[16]) {
+inline void print_matrix_16(GLfloat m[16]) {
     printf("%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n",
         m[0], m[1], m[2], m[3],
         m[4], m[5], m[6], m[7],
         m[8], m[9], m[10], m[11],
         m[12], m[13], m[14], m[15]);
 }
-void print_matrix_4(GLfloat m[4]) {
+inline void print_matrix_4(GLfloat m[4]) {
     printf("%f %f %f %f\n",
         m[0], m[1], m[2], m[3]);
 }
 
-void matrix_mult_16_16(GLfloat a[16], GLfloat b[16], GLfloat result[16]) {
+inline void matrix_mult_16_16(GLfloat a[16], GLfloat b[16], GLfloat result[16]) {
     // multiplication for 4x4 matrices
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -40,7 +41,7 @@ void matrix_mult_16_16(GLfloat a[16], GLfloat b[16], GLfloat result[16]) {
         }
     }
 }
-void matrix_mult_16_4(GLfloat a[16], GLfloat b[4], GLfloat result[4]) {
+inline void matrix_mult_16_4(GLfloat a[16], GLfloat b[4], GLfloat result[4]) {
     // multiplication for 4x4 and 4x1 matrices
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 1; j++) {
@@ -52,7 +53,7 @@ void matrix_mult_16_4(GLfloat a[16], GLfloat b[4], GLfloat result[4]) {
     }
 }
 
-bool gluInvertMatrix(const float m[16], float invOut[16])
+inline bool gluInvertMatrix(const float m[16], float invOut[16])
 {
     double inv[16], det;
     int i;
@@ -182,7 +183,7 @@ bool gluInvertMatrix(const float m[16], float invOut[16])
     return true;
 }
 
-void get_object_translation_rotation_matrix(GLfloat camera_matrix[16], GLfloat object_matrix[16], GLfloat res[16]) {
+inline void get_object_translation_rotation_matrix(GLfloat camera_matrix[16], GLfloat object_matrix[16], GLfloat res[16]) {
     GLfloat camera_inverse[16];
     gluInvertMatrix(camera_matrix, camera_inverse);
     matrix_mult_16_16(object_matrix, camera_inverse, res);
