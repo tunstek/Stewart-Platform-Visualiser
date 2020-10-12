@@ -7,6 +7,8 @@
 
 
 // CONFIG
+#define DISPLAY_INVERSE_KINEMATICS
+
 #define BOTTOM_LINK_1 { -530.0, 233.0, 0 }
 #define TOP_LINK_1 { -530.0, -233.0, 500 }
 
@@ -56,6 +58,13 @@ const float bottom_link_5[3] = BOTTOM_LINK_5;
 const float top_link_5[3] = TOP_LINK_5;
 const float bottom_link_6[3] = BOTTOM_LINK_6;
 const float top_link_6[3] = TOP_LINK_6;
+
+float link_1_length;
+float link_2_length;
+float link_3_length;
+float link_4_length;
+float link_5_length;
+float link_6_length;
 
 // Calculated new platform (top link) vertices after transformations
 GLfloat v_1_new[4] = { 0.0, 0.0, 0.0, 0.0 };
@@ -170,6 +179,14 @@ void draw_platform(GLfloat x_1, GLfloat y_1, GLfloat z_1,
     matrix_mult_16_4(translation_rotation_matrix, v_4, v_4_new);
     matrix_mult_16_4(translation_rotation_matrix, v_5, v_5_new);
     matrix_mult_16_4(translation_rotation_matrix, v_6, v_6_new);
+
+    // inverse kinematics
+    link_1_length = sqrt(pow(bottom_link_1[0] - v_1[0], 2) + pow(bottom_link_1[1] - v_1[1], 2) + pow(bottom_link_1[2] - v_1[2], 2));
+    link_2_length = sqrt(pow(bottom_link_2[0] - v_2[0], 2) + pow(bottom_link_2[1] - v_2[1], 2) + pow(bottom_link_2[2] - v_2[2], 2));
+    link_3_length = sqrt(pow(bottom_link_3[0] - v_3[0], 2) + pow(bottom_link_3[1] - v_3[1], 2) + pow(bottom_link_3[2] - v_3[2], 2));
+    link_4_length = sqrt(pow(bottom_link_4[0] - v_4[0], 2) + pow(bottom_link_4[1] - v_4[1], 2) + pow(bottom_link_4[2] - v_4[2], 2));
+    link_5_length = sqrt(pow(bottom_link_5[0] - v_5[0], 2) + pow(bottom_link_5[1] - v_5[1], 2) + pow(bottom_link_5[2] - v_5[2], 2));
+    link_6_length = sqrt(pow(bottom_link_6[0] - v_6[0], 2) + pow(bottom_link_6[1] - v_6[1], 2) + pow(bottom_link_6[2] - v_6[2], 2));
 
 
     glBegin(GL_TRIANGLES);   
@@ -303,6 +320,25 @@ void display() {
     output(10, 110, std::string("Surge: ") + float_to_str(inputsPtr->surge, 2));
     output(10, 140, std::string("Sway: ") + float_to_str(inputsPtr->sway, 2));
     output(10, 170, std::string("Heave: ") + float_to_str(inputsPtr->heave, 2));
+
+#ifdef DISPLAY_INVERSE_KINEMATICS
+    glColor3f(GUI_BOX_COLOR);
+    glBegin(GL_QUADS);
+    glVertex2f(SCREEN_WIDTH-120, 0.0);
+    glVertex2f(SCREEN_WIDTH, 0.0);
+    glVertex2f(SCREEN_WIDTH, 190.0);
+    glVertex2f(SCREEN_WIDTH-120, 190.0);
+    glEnd();
+
+    glColor3f(0.0f, 0.0f, 0.0f);
+    output(SCREEN_WIDTH-110, 20, std::string("Link 1:  ") + float_to_str(link_1_length, 2));
+    output(SCREEN_WIDTH-110, 50, std::string("Link 2: ") + float_to_str(link_1_length, 2));
+    output(SCREEN_WIDTH-110, 80, std::string("Link 3:  ") + float_to_str(link_1_length, 2));
+    output(SCREEN_WIDTH-110, 110, std::string("Link 4: ") + float_to_str(link_1_length, 2));
+    output(SCREEN_WIDTH-110, 140, std::string("Link 5: ") + float_to_str(link_1_length, 2));
+    output(SCREEN_WIDTH-110, 170, std::string("Link 6: ") + float_to_str(link_1_length, 2));
+#endif // DISPLAY_INVERSE_KINEMATICS
+
 
     // Make sure we can render 3d again
     glMatrixMode(GL_PROJECTION);
