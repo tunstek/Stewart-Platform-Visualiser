@@ -25,7 +25,7 @@ public:
 		{
 			std::cerr << "CreateFileMapping failed" << std::endl;
 		}
-		mapFileBuffer = (unsigned char*)MapViewOfFile(hMapFile, FILE_MAP_READ, 0, 0, sizeof(T));
+		mapFileBuffer = (unsigned char*)MapViewOfFile(hMapFile, FILE_MAP_WRITE, 0, 0, sizeof(T));
 		if (!mapFileBuffer)
 		{
 			std::cerr << "MapViewOfFile readonly access failed." << std::endl;
