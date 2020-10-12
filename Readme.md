@@ -1,5 +1,6 @@
 # Steward Platform Visualizer
 A simple openGL based steward platform visualizer and inverse kinematic solver.
+Data is read via a Memory Mapped File.
 
 * Expects angles in radians
 * Default MMF path: `Local\\motion_ctrl_mid_vals`
