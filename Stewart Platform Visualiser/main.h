@@ -2,17 +2,37 @@
 #include <stdio.h>
 #include <cmath>
 #include <GL/glut.h>
+#include "utils.h"
+#include "memMapping.h"
 
 #define PI 3.14159
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 600
 
 // TEST
-float roll = 10.0, pitch = 0.0, yaw = 0.0; // degrees
-float surge = 50.0, sway = 0.0, heave = 0.0; // mm
+//float roll = 10.0, pitch = 0.0, yaw = 0.0; // degrees
+//float surge = 50.0, sway = 0.0, heave = 0.0; // mm
 
 // Globals
+//float cameraX = 10.0, cameraY = 10.5, cameraZ = 10;
 float cameraX = -1.0, cameraY = 0.5, cameraZ = 1500;
 float cameraRoll = 0.0, cameraPitch = -43.0;
 int lastMouseX = 0, lastMouseY = 0;
+int current_button;
+
+// memory mapping
+struct SPageFileInputs {
+    float* roll; // in radians
+    float* pitch; // in radians
+    float* yaw; // in radians
+    float* surge; // x; // mm
+    float* sway; // y; // mm
+    float* heave; // z; // mm
+};
+memMapping<SPageFileInputs> inputs;
+SPageFileInputs* inputsPtr = inputs.init("Local\\test");
+float roll, pitch, yaw, surge, sway, heave;
+
 
 // Calculated new platform vertices after transformations
 GLfloat v_1_new[4] = { 0.0, 0.0, 0.0, 0.0 };
@@ -29,7 +49,6 @@ void link_end(GLdouble x, GLdouble y, GLdouble z, GLdouble r, GLint slices, GLin
     glutWireSphere(r, slices, stacks);
     glPopMatrix();
 }
-
 void link(GLdouble x_1, GLdouble y_1, GLdouble z_1, GLdouble x_2, GLdouble y_2, GLdouble z_2) {
     glBegin(GL_LINES);
     glVertex3f(x_1, y_1, z_1);
@@ -66,185 +85,12 @@ void draw_base(GLdouble x_1, GLdouble y_1, GLdouble z_1,
 }
 
 
-bool gluInvertMatrix(const float m[16], float invOut[16])
-{
-    double inv[16], det;
-    int i;
-
-    inv[0] = m[5] * m[10] * m[15] -
-        m[5] * m[11] * m[14] -
-        m[9] * m[6] * m[15] +
-        m[9] * m[7] * m[14] +
-        m[13] * m[6] * m[11] -
-        m[13] * m[7] * m[10];
-
-    inv[4] = -m[4] * m[10] * m[15] +
-        m[4] * m[11] * m[14] +
-        m[8] * m[6] * m[15] -
-        m[8] * m[7] * m[14] -
-        m[12] * m[6] * m[11] +
-        m[12] * m[7] * m[10];
-
-    inv[8] = m[4] * m[9] * m[15] -
-        m[4] * m[11] * m[13] -
-        m[8] * m[5] * m[15] +
-        m[8] * m[7] * m[13] +
-        m[12] * m[5] * m[11] -
-        m[12] * m[7] * m[9];
-
-    inv[12] = -m[4] * m[9] * m[14] +
-        m[4] * m[10] * m[13] +
-        m[8] * m[5] * m[14] -
-        m[8] * m[6] * m[13] -
-        m[12] * m[5] * m[10] +
-        m[12] * m[6] * m[9];
-
-    inv[1] = -m[1] * m[10] * m[15] +
-        m[1] * m[11] * m[14] +
-        m[9] * m[2] * m[15] -
-        m[9] * m[3] * m[14] -
-        m[13] * m[2] * m[11] +
-        m[13] * m[3] * m[10];
-
-    inv[5] = m[0] * m[10] * m[15] -
-        m[0] * m[11] * m[14] -
-        m[8] * m[2] * m[15] +
-        m[8] * m[3] * m[14] +
-        m[12] * m[2] * m[11] -
-        m[12] * m[3] * m[10];
-
-    inv[9] = -m[0] * m[9] * m[15] +
-        m[0] * m[11] * m[13] +
-        m[8] * m[1] * m[15] -
-        m[8] * m[3] * m[13] -
-        m[12] * m[1] * m[11] +
-        m[12] * m[3] * m[9];
-
-    inv[13] = m[0] * m[9] * m[14] -
-        m[0] * m[10] * m[13] -
-        m[8] * m[1] * m[14] +
-        m[8] * m[2] * m[13] +
-        m[12] * m[1] * m[10] -
-        m[12] * m[2] * m[9];
-
-    inv[2] = m[1] * m[6] * m[15] -
-        m[1] * m[7] * m[14] -
-        m[5] * m[2] * m[15] +
-        m[5] * m[3] * m[14] +
-        m[13] * m[2] * m[7] -
-        m[13] * m[3] * m[6];
-
-    inv[6] = -m[0] * m[6] * m[15] +
-        m[0] * m[7] * m[14] +
-        m[4] * m[2] * m[15] -
-        m[4] * m[3] * m[14] -
-        m[12] * m[2] * m[7] +
-        m[12] * m[3] * m[6];
-
-    inv[10] = m[0] * m[5] * m[15] -
-        m[0] * m[7] * m[13] -
-        m[4] * m[1] * m[15] +
-        m[4] * m[3] * m[13] +
-        m[12] * m[1] * m[7] -
-        m[12] * m[3] * m[5];
-
-    inv[14] = -m[0] * m[5] * m[14] +
-        m[0] * m[6] * m[13] +
-        m[4] * m[1] * m[14] -
-        m[4] * m[2] * m[13] -
-        m[12] * m[1] * m[6] +
-        m[12] * m[2] * m[5];
-
-    inv[3] = -m[1] * m[6] * m[11] +
-        m[1] * m[7] * m[10] +
-        m[5] * m[2] * m[11] -
-        m[5] * m[3] * m[10] -
-        m[9] * m[2] * m[7] +
-        m[9] * m[3] * m[6];
-
-    inv[7] = m[0] * m[6] * m[11] -
-        m[0] * m[7] * m[10] -
-        m[4] * m[2] * m[11] +
-        m[4] * m[3] * m[10] +
-        m[8] * m[2] * m[7] -
-        m[8] * m[3] * m[6];
-
-    inv[11] = -m[0] * m[5] * m[11] +
-        m[0] * m[7] * m[9] +
-        m[4] * m[1] * m[11] -
-        m[4] * m[3] * m[9] -
-        m[8] * m[1] * m[7] +
-        m[8] * m[3] * m[5];
-
-    inv[15] = m[0] * m[5] * m[10] -
-        m[0] * m[6] * m[9] -
-        m[4] * m[1] * m[10] +
-        m[4] * m[2] * m[9] +
-        m[8] * m[1] * m[6] -
-        m[8] * m[2] * m[5];
-
-    det = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
-
-    if (det == 0)
-        return false;
-
-    det = 1.0 / det;
-
-    for (i = 0; i < 16; i++)
-        invOut[i] = inv[i] * det;
-
-    return true;
-}
-
-
-void matrix_mult_16_16(GLfloat a[16], GLfloat b[16], GLfloat result[16]) {
-    // multiplication for 4x4 matrices
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            result[i * 4 + j] = 0;
-            for (int k = 0; k < 4; k++) {
-                result[i * 4 + j] += a[i * 4 + k] * b[k * 4 + j];
-            }
-        }
-    }
-}
-void matrix_mult_16_4(GLfloat a[16], GLfloat b[4], GLfloat result[4]) {
-    // multiplication for 4x4 and 4x1 matrices
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 1; j++) {
-            result[i + j] = 0;
-            for (int k = 0; k < 4; k++) {
-                result[i + j] += a[i * 4 + k] * b[k + j];
-            }
-        }
-    }
-}
-
-void get_object_translation_rotation_matrix(GLfloat camera_matrix[16], GLfloat object_matrix[16], GLfloat res[16]) {
-    GLfloat camera_inverse[16];
-    gluInvertMatrix(camera_matrix, camera_inverse);
-    matrix_mult_16_16(object_matrix, camera_inverse, res);
-}
-
-void print_matrix_16(GLfloat m[16]) {
-    printf("%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n",
-        m[0], m[1], m[2], m[3],
-        m[4], m[5], m[6], m[7],
-        m[8], m[9], m[10], m[11],
-        m[12], m[13], m[14], m[15]);
-}
-void print_matrix_4(GLfloat m[4]) {
-    printf("%f %f %f %f\n",
-        m[0], m[1], m[2], m[3]);
-}
-
-
 void draw_platform(GLfloat x_1, GLfloat y_1, GLfloat z_1,
-    GLfloat x_2, GLfloat y_2, GLfloat z_2,
-    GLfloat x_3, GLfloat y_3, GLfloat z_3,
-    GLfloat x_4, GLfloat y_4, GLfloat z_4,
-    GLfloat x_5, GLfloat y_5, GLfloat z_5,
-    GLfloat x_6, GLfloat y_6, GLfloat z_6) {
+                   GLfloat x_2, GLfloat y_2, GLfloat z_2,
+                   GLfloat x_3, GLfloat y_3, GLfloat z_3,
+                   GLfloat x_4, GLfloat y_4, GLfloat z_4,
+                   GLfloat x_5, GLfloat y_5, GLfloat z_5,
+                   GLfloat x_6, GLfloat y_6, GLfloat z_6) {
 
     GLfloat v_1[4] = { x_1, y_1, z_1, 1.0 };
     GLfloat v_2[4] = { x_2, y_2, z_2, 1.0 };
@@ -263,10 +109,28 @@ void draw_platform(GLfloat x_1, GLfloat y_1, GLfloat z_1,
     // get camera matrix
     glGetFloatv(GL_MODELVIEW_MATRIX, camera_matrix);
     
-    glTranslatef(sway, surge, heave);
-    glRotatef((GLfloat)roll, 0.0, 1.0, 0.0);
-    glRotatef((GLfloat)pitch, 1.0, 0.0, 0.0);
-    glRotatef((GLfloat)yaw, 0.0, 0.0, 1.0);
+
+
+    // TEST
+    inputsPtr->roll = &roll;
+    inputsPtr->pitch = &pitch;
+    inputsPtr->yaw = &yaw;
+    inputsPtr->sway = &sway;
+    inputsPtr->surge = &surge;
+    inputsPtr->heave = &heave;
+
+    *inputsPtr->roll = 10.0;
+    *inputsPtr->pitch = 15.0;
+    *inputsPtr->yaw = 5.0;
+    *inputsPtr->sway = 2.0;
+    *inputsPtr->surge = 5.0;
+    *inputsPtr->heave = 4.0;
+
+
+    glTranslatef(*inputsPtr->sway, *inputsPtr->surge, *inputsPtr->heave);
+    glRotatef((GLfloat)*inputsPtr->roll, 0.0, 1.0, 0.0);
+    glRotatef((GLfloat)*inputsPtr->pitch, 1.0, 0.0, 0.0);
+    glRotatef((GLfloat)*inputsPtr->yaw, 0.0, 0.0, 1.0);
 
     // get new matrix after transformations
     glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
@@ -281,16 +145,7 @@ void draw_platform(GLfloat x_1, GLfloat y_1, GLfloat z_1,
     translation_rotation_matrix[7] = -translation_rotation_matrix[13];
     translation_rotation_matrix[11] = -translation_rotation_matrix[14];
 
-
-    printf("Translation Rotation matrix: \n");
-    print_matrix_16(translation_rotation_matrix);
-
-    
-
-    
-    printf("Old v_1 co-ordinates: ");
-    print_matrix_4(v_1);
-
+    // get the new vertex coordinates
     matrix_mult_16_4(translation_rotation_matrix, v_1, v_1_new);
     matrix_mult_16_4(translation_rotation_matrix, v_2, v_2_new);
     matrix_mult_16_4(translation_rotation_matrix, v_3, v_3_new);
@@ -298,13 +153,9 @@ void draw_platform(GLfloat x_1, GLfloat y_1, GLfloat z_1,
     matrix_mult_16_4(translation_rotation_matrix, v_5, v_5_new);
     matrix_mult_16_4(translation_rotation_matrix, v_6, v_6_new);
 
-    printf("New v_1 co-ordinates: ");
-    print_matrix_4(v_1_new);
-    
-
 
     glBegin(GL_TRIANGLES);   
-
+    // use the old vertex coordinates here and let opengl handle translation and rotation
     glVertex3f(v_1[0], v_1[1], v_1[2]);
     glVertex3f(v_2[0], v_2[1], v_2[2]);
     glVertex3f(v_3[0], v_3[1], v_3[2]);
@@ -328,47 +179,15 @@ void draw_platform(GLfloat x_1, GLfloat y_1, GLfloat z_1,
 }
 
 
-
-
-
-
-// WiP, Almost but not quite..
-void extendable_link(GLdouble width, GLdouble height, GLdouble bottom_x, GLdouble bottom_y, GLdouble top_x, GLdouble top_y, GLdouble top_z) {
-    // a^2 = b^2+c^2
-    float H_1 = sqrt(pow(bottom_x - top_x, 2) + pow(bottom_y - top_y, 2));
-    float H_2 = sqrt(pow(H_1, 2) + pow(500, 2)); // actual length of link
-    float tan_theta = 500 / H_1;
-    float theta = atan(tan_theta);
-    //theta = theta - (0.5 * PI);
-    if (top_x != bottom_x) {
-        theta = theta * -1;
-    }
-    theta = theta * (180 / PI);
-    if (theta != 0) {
-        //theta = abs(theta - 90);
-    }
-
-    float tan_alpha = abs(top_x - bottom_x) / abs(top_y - bottom_y);
-    float alpha = atan(tan_alpha);
-    if (top_x < bottom_x) {
-        alpha = -1 * alpha;
-    }
-    alpha = alpha * (180 / PI);
-    if (alpha != 0) {
-        alpha = abs(alpha - 90);
-    }
-
-    //printf("top_x: %f top_y: %f bottom_x: %f bottom_y: %f\n", top_x, top_y, bottom_x, bottom_y);
-    //printf("alpha: %f\n", alpha);
-    //printf("theta: %f\n", theta);
+void output(GLfloat x, GLfloat y, std::string text, ...) {
+    char* cstr = &text[0];
 
     glPushMatrix();
-    glTranslatef(bottom_x, bottom_y, 0.0);
-    glRotatef((GLfloat)theta, 1.0, 0.0, 0.0);
-    //glRotatef((GLfloat)alpha, 1.0, 0.0, 0.0);
-
-    glScalef(width, height, H_2);
-    glutWireCube(1.0);
+    glTranslatef(x, y, 0);
+    glRotatef((GLfloat)180, 1.0, 0.0, 0.0);
+    glScalef(0.1f, 0.1f, 0.1f);
+    for (char* p = cstr; *p; p++)
+        glutStrokeCharacter(GLUT_STROKE_ROMAN, *p);
     glPopMatrix();
 }
 
@@ -389,8 +208,8 @@ void display() {
     float top_link_6[3] = { -466.0f, -341.0f, 500.0f };
 
 
-
     glClear(GL_COLOR_BUFFER_BIT);
+
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity(); //remove transforms from previous display() call
 
@@ -404,6 +223,7 @@ void display() {
     printf("Camera Matrix: \n");
     print_matrix_16(camera_matrix);
 
+    glColor3ub(255, 255, 255);
    
     draw_platform(top_link_1[0], top_link_1[1], top_link_1[2],
         top_link_2[0], top_link_2[1], top_link_2[2],
@@ -413,48 +233,30 @@ void display() {
         top_link_6[0], top_link_6[1], top_link_6[2]);
     
     
-    
-    //printf("\nLink 1\n");
-    
     link(bottom_link_1[0], bottom_link_1[1], bottom_link_1[2], v_1_new[0], v_1_new[1], v_1_new[2]);
     link_end(bottom_link_1[0], bottom_link_1[1], bottom_link_1[2], 10, 5, 5);
     link_end(v_1_new[0], v_1_new[1], v_1_new[2], 10, 5, 5);
-    //extendable_link(50.0, 50.0, bottom_link_1[0], bottom_link_1[1], top_link_1[0], top_link_1[1], top_link_1[2]);
 
-    //printf("\nLink 2\n");
-    
     link(bottom_link_2[0], bottom_link_2[1], bottom_link_2[2], v_2_new[0], v_2_new[1], v_2_new[2]);
     link_end(bottom_link_2[0], bottom_link_2[1], bottom_link_2[2], 10, 5, 5);
     link_end(v_2_new[0], v_2_new[1], v_2_new[2], 10, 5, 5);
-    //extendable_link(50.0, 50.0, bottom_link_2[0], bottom_link_2[1], top_link_2[0], top_link_2[1], top_link_2[2]);
-
-    //printf("\nLink 3\n");
     
     link(bottom_link_3[0], bottom_link_3[1], bottom_link_3[2], v_3_new[0], v_3_new[1], v_3_new[2]);
     link_end(bottom_link_3[0], bottom_link_3[1], bottom_link_3[2], 10, 5, 5);
     link_end(v_3_new[0], v_3_new[1], v_3_new[2], 10, 5, 5);
-    //extendable_link(50.0, 50.0, bottom_link_3[0], bottom_link_3[1], top_link_3[0], top_link_3[1], top_link_3[2]);
-
-    //printf("\nLink 4\n");
     
     link(bottom_link_4[0], bottom_link_4[1], bottom_link_4[2], v_4_new[0], v_4_new[1], v_4_new[2]);
     link_end(bottom_link_4[0], bottom_link_4[1], bottom_link_4[2], 10, 5, 5);
     link_end(v_4_new[0], v_4_new[1], v_4_new[2], 10, 5, 5);
-    //extendable_link(50.0, 50.0, bottom_link_4[0], bottom_link_4[1], top_link_4[0], top_link_4[1], top_link_4[2]);
-
-    //printf("\nLink 5\n");
     
     link(bottom_link_5[0], bottom_link_5[1], bottom_link_5[2], v_5_new[0], v_5_new[1], v_5_new[2]);
     link_end(bottom_link_5[0], bottom_link_5[1], bottom_link_5[2], 10, 5, 5);
     link_end(v_5_new[0], v_5_new[1], v_5_new[2], 10, 5, 5);
-    //extendable_link(50.0, 50.0, bottom_link_5[0], bottom_link_5[1], top_link_5[0], top_link_5[1], top_link_5[2]);
-
-    //printf("\nLink 6\n");
     
     link(bottom_link_6[0], bottom_link_6[1], bottom_link_6[2], v_6_new[0], v_6_new[1], v_6_new[2]);
     link_end(bottom_link_6[0], bottom_link_6[1], bottom_link_6[2], 10, 5, 5);
     link_end(v_6_new[0], v_6_new[1], v_6_new[2], 10, 5, 5);
-    //extendable_link(50.0, 50.0, bottom_link_6[0], bottom_link_6[1], top_link_6[0], top_link_6[1], top_link_6[2]);
+
 
     draw_base(-360, 625, 0,
          360, 625, 0,
@@ -464,9 +266,47 @@ void display() {
          -721, 0, 0);
 
     
-    
     glPopMatrix();
+
+
+
+    // Start 2d
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, -1, 1);
+
+    glMatrixMode(GL_MODELVIEW);
+    
+    glPushMatrix();
+    glLoadIdentity();
+    glDisable(GL_CULL_FACE);
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    glColor3f(0.0f, 255.0f, 1.0f);
+    glBegin(GL_QUADS);
+    glVertex2f(0.0, 0.0);
+    glVertex2f(100.0, 0.0);
+    glVertex2f(100.0, 190.0);
+    glVertex2f(0.0, 190.0);
+    glEnd();
+
+    glColor3f(0.0f, 0.0f, 0.0f);
+    output(10, 20,  std::string("Roll:  ") + float_to_str(roll, 2));
+    output(10, 50,  std::string("Pitch: ") + float_to_str(pitch, 2));
+    output(10, 80,  std::string("Yaw:  ") + float_to_str(yaw, 2));
+    output(10, 110, std::string("Surge: ") + float_to_str(surge, 2));
+    output(10, 140, std::string("Sway: ") + float_to_str(sway, 2));
+    output(10, 170, std::string("Heave: ") + float_to_str(heave, 2));
+
+    // Make sure we can render 3d again
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
     glFlush();
+    glutSwapBuffers();
 }
 
 
@@ -478,7 +318,6 @@ void reshape(GLint w, GLint h) {
 }
 
 
-int current_button;
 void drag(int x, int y) {
     int dx = x - lastMouseX;
     int dy = y - lastMouseY;
@@ -547,9 +386,9 @@ void init() {
 
 int main(int argc, char** argv) {
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
     glutInitWindowPosition(80, 80);
-    glutInitWindowSize(800, 600);
+    glutInitWindowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
     glutCreateWindow("Steward Platform Visualizer");
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
